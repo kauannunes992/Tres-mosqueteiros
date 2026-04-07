@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Destinos Cruzados - Edição Definitiva</title>
+    <style>
+        :root {
+            --bg-dark: #0f0c29;
+            --text-color: #f0f0f0;
+            --accent-color: #ff9ff3;
+            --ui-border: #ffffff;
+        }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Courier New', Courier, monospace;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #000;
+            color: var(--text-color);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            height: 100dvh; /* Altura dinâmica para mobile */
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 450px;
+            height: 100%;
+            background: var(--bg-dark);
+            border: 4px solid #333;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Telas --- */
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            padding: 15px;
+            text-align: center;
+            z-index: 2;
+            justify-content: center;
+        }
+        .active { display: flex; }
+
+        /* --- Backgrounds --- */
+        .bg-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            transition: 0.8s;
+        }
+        .bg-city { background: linear-gradient(180deg, #2c3e50 0%, #000 100%); }
+        .bg-park { background: linear-gradient(180deg, #1d3321 0%, #0a0f0b 100%); }
+        .bg-cafe { background: linear-gradient(180deg, #4a3728 0%, #1a1a2e 100%); }
+
+        /* --- UI e Botões --- */
+        h1 { font-size: 24px; margin-bottom: 20px; color: var(--accent-color); text-shadow: 2px 2px #000; }
+        
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            padding: 10px 0;
+        }
+
+        .btn {
+            background: #222;
+            border: 3px solid var(--ui-border);
+            color: white;
+            padding: 14px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            text-transform: uppercase;
+            box-shadow: 4px 4px 0px #000;
+            width: 100%;
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0px #000; }
+
+        /* --- Caixa de Jogo (Flexível) --- */
+        .game-layout {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            justify-content: space-between;
+        }
+
+        .dialog-box {
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid var(--ui-border);
+            padding: 20px 15px 15px 15px;
+            position: relative;
+            margin-bottom: 10px;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .char-name {
+            position: absolute;
+            top: -15px;
+            left: 10px;
+            background: #fff;
+            color: #000;
+            padding: 2px 12px;
+            font-weight: bold;
+            border: 2px solid #000;
+            font-size: 14px;
+        }
+
+        .stats-bar {
+            background: rgba(0,0,0,0.8);
+            padding: 8px 15px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 2px solid #444;
+            z-index: 10;
+        }
+
+        .pixel-char {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            image-rendering: pixelated;
+        }
+
+        .pixel-char svg {
+            height: 60%;
+            max-height: 200px;
+        }
+
+        /* --- Tela Final --- */
+        .end-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed var(--accent-color);
+            padding: 15px;
+            text-align: left;
+            overflow-y: auto;
+            flex-grow: 1;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="bg-layer bg-city" id="main-bg"></div>
+
+    <div id="stats" class="stats-bar" style="display: none;">
+        <span id="stat-name">---</span>
+        <span id="stat-affinity">❤️ 0</span>
+        <span id="stat-trust">🛡️ 0</span>
+    </div>
+
+    <div id="screen-menu" class="screen active">
+        <h1>DESTINOS CRUZADOS</h1>
+        <div class="btn-container">
+            <button class="btn" onclick="showScreen('screen-select')">Jogar</button>
+            <button class="btn" onclick="alert('Caio: Tímido\nKauan/Matheus: Alegres\nAna: DIFÍCIL\nVitória: Tímida\nRosângela: Madura\nBelle: Kuma & Sono')">Perfis</button>
+        </div>
+    </div>
+
+    <div id="screen-select" class="screen">
+        <h2>QUEM VOCÊ É?</h2>
+        <div class="btn-container">
+            <button class="btn" onclick="selectChar('Kauan')">KAUAN (Alegre)</button>
+            <button class="btn" onclick="selectChar('Matheus')">MATHEUS (Divertido)</button>
+            <button class="btn" onclick="selectChar('Caio')">CAIO (Muito Tímido)</button>
+        </div>
+    </div>
+
+    <div id="screen-caio-route" class="screen">
+        <h2>ENCONTRAR QUEM?</h2>
+        <div class="btn-container">
+            <button class="btn" onclick="selectSubRoute('Belle')">BELLE (Dorminhoca)</button>
+            <button class="btn" onclick="selectSubRoute('Ana')">ANA (Insuportável)</button>
+        </div>
+    </div>
+
+    <div id="screen-game" class="screen" style="padding: 0;">
+        <div class="game-layout">
+            <div id="char-sprite" class="pixel-char"></div>
+            
+            <div class="dialog-box">
+                <div id="speaker-name" class="char-name">---</div>
+                <p id="dialog-text" style="font-size: 14px; line-height: 1.4; margin-bottom: 10px; flex-grow: 1;"></p>
+                <div id="game-choices" class="btn-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-end" class="screen">
+        <h1>RESULTADO</h1>
+        <div class="end-card">
+            <h3 id="end-status" style="color: var(--accent-color); margin-bottom: 10px;"></h3>
+            <p id="end-summary"></p>
+            <div id="end-stats-final" style="margin-top: 15px; font-size: 12px; border-top: 1px solid #555; pt: 10px;"></div>
+        </div>
+        <button class="btn" onclick="location.reload()">Jogar Novamente</button>
+    </div>
+</div>
+
+<script>
+    const state = { name: '', target: '', affinity: 0, trust: 0, chapter: 1 };
+
+    const characters = {
+        'Kauan': { tone: 'alegre' },
+        'Matheus': { tone: 'alegre' },
+        'Caio': { tone: 'timido' },
+        'Vitória': { color: '#ff9ff3' },
+        'Rosângela': { color: '#54a0ff' },
+        'Belle': { color: '#feca57' },
+        'Ana': { color: '#ff6b6b' }
+    };
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function selectChar(name) {
+        state.name = name;
+        if (name === 'Caio') {
+            showScreen('screen-caio-route');
+        } else {
+            state.target = (name === 'Kauan') ? 'Vitória' : 'Rosângela';
+            startGame();
+        }
+    }
+
+    function selectSubRoute(sub) {
+        state.target = sub;
+        startGame();
+    }
+
+    function startGame() {
+        document.getElementById('stats').style.display = 'flex';
+        updateStats();
+        showScreen('screen-game');
+        loadChapter();
+    }
+
+    function updateStats() {
+        document.getElementById('stat-name').innerText = `${state.name} ❤️ ${state.target}`;
+        document.getElementById('stat-affinity').innerText = `❤️ ${state.affinity}`;
+        document.getElementById('stat-trust').innerText = `🛡️ ${state.trust}`;
+    }
+
+    function loadChapter() {
+        if (state.chapter > 5) return finishGame();
+        
+        const scene = getSceneContent(state.target, state.chapter);
+        renderScene(scene);
+        state.chapter++;
+    }
+
+    function getSceneContent(target, chap) {
+        const data = {
+            'Vitória': [
+                { text: "Vitória está escondida atrás de um livro. Ela te olha e desvia o olho rápido, muito tímida.", 
+                  options: [
+                      { t: "Oi! Tudo bem? (Alegre)", a: 10, tr: 5, r: "Ela sorri fraco. 'O-oi... você é sempre tão animado...'" },
+                      { t: "Ficar em silêncio", a: 2, tr: 10, r: "Ela se sente confortável com o seu respeito ao espaço dela." }
+                  ]},
+                { text: "Ela derrubou um papel importante e parece nervosa.", 
+                  options: [
+                      { t: "Pegar e entregar sorrindo", a: 12, tr: 8, r: "Ela cora muito. 'Obrigada... de verdade.'" },
+                      { t: "Fazer uma piada pra descontrair", a: 5, tr: 2, r: "Ela solta um risinho nervoso." }
+                  ]}
+            ],
+            'Rosângela': [
+                { text: "Rosângela te olha com postura. 'Matheus, espero que tenha algo relevante para dizer.'", 
+                  options: [
+                      { t: "Falar sobre planos futuros", a: 10, tr: 15, r: "Ela assente. 'Gosto da sua visão madura.'" },
+                      { t: "Fazer uma piada boba", a: -5, tr: -5, r: "Ela suspira. 'Seja um pouco mais sério, por favor.'" }
+                  ]}
+            ],
+            'Belle': [
+                { text: "Belle está quase dormindo em pé. 'Kuma me acordou às 5h da manhã...'", 
+                  options: [
+                      { t: "Perguntar sobre o Kuma", a: 15, tr: 5, r: "Ela desperta! 'Ele é meu tudo, sabia?'" },
+                      { t: "Sugerir que ela durma um pouco", a: 10, tr: 5, r: "'Você me entende tão bem...'" }
+                  ]}
+            ],
+            'Ana': [
+                { text: "Ana está com cara de poucos amigos. 'O que você quer? Não tenho o dia todo.'", 
+                  options: [
+                      { t: "Tentar elogiar ela", a: -15, tr: -10, r: "'Poupe-me da sua falsidade', ela diz." },
+                      { t: "Ser direto e seco", a: 5, tr: 10, r: "Ela arqueia a sobrancelha. 'Finalmente alguém que não enrola.'" }
+                  ]},
+                { text: "Ela reclama de literalmente tudo na sua frente.", 
+                  options: [
+                      { t: "Tentar ser positivo", a: -20, tr: -5, r: "Ela te olha com nojo. 'Sério? Quanta positividade tóxica.'" },
+                      { t: "Reclamar junto com ela", a: 10, tr: 5, r: "Ela quase sorri. 'Pois é! Pelo menos você enxerga o óbvio.'" }
+                  ]}
+            ]
+        };
+        let list = data[target] || [];
+        return list[Math.floor(Math.random() * list.length)] || { text: "O encontro continua...", options: [{t: "Continuar", a:5, tr:5, r: "Seguindo..."}]};
+    }
+
+    function renderScene(scene) {
+        document.getElementById('speaker-name').innerText = state.target;
+        document.getElementById('speaker-name').style.background = characters[state.target].color;
+        
+        let prefix = (state.name === 'Caio') ? "Caio: (E-eu... ah...) " : `${state.name}: `;
+        document.getElementById('dialog-text').innerText = scene.text;
+        
+        const container = document.getElementById('game-choices');
+        container.innerHTML = '';
+        
+        scene.options.forEach(opt => {
+            const b = document.createElement('button');
+            b.className = 'btn';
+            b.innerText = opt.t;
+            b.onclick = () => {
+                state.affinity += opt.a;
+                state.trust += opt.tr;
+                updateStats();
+                container.innerHTML = '';
+                document.getElementById('dialog-text').innerText = opt.r;
+                
+                const next = document.createElement('button');
+                next.className = 'btn';
+                next.innerText = "Continuar >>";
+                next.onclick = loadChapter;
+                container.appendChild(next);
+            };
+            container.appendChild(b);
+        });
+
+        const col = characters[state.target].color;
+        document.getElementById('char-sprite').innerHTML = `
+            <svg viewBox="0 0 100 120">
+                <rect x="25" y="20" width="50" height="50" fill="${col}"/>
+                <rect x="35" y="40" width="8" height="8" fill="#000"/>
+                <rect x="57" y="40" width="8" height="8" fill="#000"/>
+                <rect x="30" y="80" width="40" height="30" fill="#333"/>
+            </svg>`;
+    }
+
+    function finishGame() {
+        showScreen('screen-end');
+        document.getElementById('stats').style.display = 'none';
+        
+        let status = "";
+        let desc = "";
+
+        if (state.target === 'Ana') {
+            if (state.affinity > 10) {
+                status = "VITÓRIA IMPOSSÍVEL!";
+                desc = "Você sobreviveu à Ana! Ela admitiu que você é 'menos irritante que a média'. Isso vindo dela é um pedido de casamento.";
+            } else {
+                status = "REJEIÇÃO TOTAL";
+                desc = "Ana te expulsou da vida dela. Ela até mudou de calçada quando te viu no final.";
+            }
+        } else if (state.affinity > 35) {
+            status = "CONEXÃO PERFEITA!";
+            desc = `Você e ${state.target} se dão maravilhosamente bem. O romance está no ar!`;
+        } else if (state.affinity > 15) {
+            status = "BONS AMIGOS";
+            desc = `Vocês se respeitam, mas não rolou aquela química forte para algo mais.`;
+        } else {
+            status = "FIM DA LINHA";
+            desc = "Não houve sintonia. Melhor tentar caminhos diferentes.";
+        }
+
+        document.getElementById('end-status').innerText = status;
+        document.getElementById('end-summary').innerText = desc;
+        document.getElementById('end-stats-final').innerHTML = `
+            Afinidade com ${state.target}: ${state.affinity}<br>
+            Confiança Estabelecida: ${state.trust}
+        `;
+    }
+</script>
+
+</body>
+</html>
+
