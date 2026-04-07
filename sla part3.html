@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Romance Pixel Life</title>
+
+<style>
+body{
+margin:0;
+font-family:monospace;
+background:#111;
+color:#fff;
+}
+
+.screen{
+display:none;
+padding:20px;
+}
+
+.active{display:block;}
+
+button{
+display:block;
+margin:10px auto;
+padding:12px;
+width:85%;
+border:none;
+background:#444;
+color:#fff;
+border-radius:8px;
+font-size:16px;
+}
+
+.box{
+background:#222;
+padding:15px;
+border-radius:10px;
+margin-top:10px;
+}
+
+.status{
+display:flex;
+justify-content:space-between;
+font-size:14px;
+}
+
+.choice{
+background:#333;
+margin:5px 0;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- MENU -->
+<div id="menu" class="screen active">
+<h1>Romance Pixel Life</h1>
+<button onclick="go('intro')">Jogar</button>
+<button onclick="go('how')">Como funciona</button>
+<button onclick="go('credits')">Créditos</button>
+</div>
+
+<!-- COMO FUNCIONA -->
+<div id="how" class="screen">
+<div class="box">
+Escolha ações para conquistar cada personagem.
+Cada uma reage diferente.
+</div>
+<button onclick="go('menu')">Voltar</button>
+</div>
+
+<!-- CREDITOS -->
+<div id="credits" class="screen">
+<div class="box">
+Criado por você + ChatGPT 😎
+</div>
+<button onclick="go('menu')">Voltar</button>
+</div>
+
+<!-- INTRO -->
+<div id="intro" class="screen">
+<div class="box">
+A cidade está cheia de histórias...
+</div>
+<button onclick="go('select')">Continuar</button>
+</div>
+
+<!-- ESCOLHA -->
+<div id="select" class="screen">
+<h2>Escolha</h2>
+<button onclick="startGame('kauan')">Kauan (Vitória)</button>
+<button onclick="startGame('matheus')">Matheus (Rosângela)</button>
+<button onclick="startGame('caio')">Caio</button>
+</div>
+
+<!-- CAIO -->
+<div id="caioRoute" class="screen">
+<h2>Escolha a rota</h2>
+<button onclick="startGame('caio','belle')">Belle</button>
+<button onclick="startGame('caio','ana')">Ana</button>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+<div class="status">
+<div>Afinidade: <span id="aff">0</span></div>
+<div>Confiança: <span id="conf">0</span></div>
+<div>Humor: <span id="mood">0</span></div>
+</div>
+
+<div class="box" id="text"></div>
+<div id="choices"></div>
+</div>
+
+<!-- FINAL -->
+<div id="end" class="screen">
+<h2>Final</h2>
+<div class="box" id="finalText"></div>
+<button onclick="restart()">Recomeçar</button>
+</div>
+
+<script>
+
+// ===== SISTEMA =====
+
+let state;
+
+function resetState(char, route=null){
+state = {
+char,
+route,
+aff:0,
+conf:0,
+mood:0,
+chapter:1
+};
+}
+
+function go(id){
+document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+}
+
+function startGame(char, route=null){
+
+if(char==="caio" && !route){
+go("caioRoute");
+return;
+}
+
+resetState(char,route);
+go("game");
+nextScene();
+}
+
+function rand(arr){
+return arr[Math.floor(Math.random()*arr.length)];
+}
+
+function updateStatus(){
+document.getElementById("aff").innerText=state.aff;
+document.getElementById("conf").innerText=state.conf;
+document.getElementById("mood").innerText=state.mood;
+}
+
+// ===== EVENTOS PERSONALIZADOS =====
+
+function generateEvent(){
+
+// Vitória (tímida)
+if(state.char==="kauan"){
+return {
+text:rand([
+"Vitória fala baixo e evita contato visual.",
+"Ela parece tímida, mas presta atenção em tudo.",
+"Vitória responde com cuidado, observando você."
+]),
+choices:[
+{label:"Ser gentil",aff:3,conf:2},
+{label:"Fazer piada leve",aff:1,mood:2},
+{label:"Respeitar o espaço",conf:3}
+]
+};
+}
+
+// Rosângela (provocadora)
+if(state.char==="matheus"){
+return {
+text:rand([
+"Rosângela sorri de forma provocante.",
+"Ela te encara com confiança.",
+"O clima fica cheio de tensão."
+]),
+choices:[
+{label:"Flertar",aff:3,mood:2},
+{label:"Ser maduro",conf:3},
+{label:"Impressionar",aff:2}
+]
+};
+}
+
+// Caio Belle
+if(state.route==="belle"){
+return {
+text:rand([
+"Belle parece com sono e abraça o cachorro Kuma.",
+"Ela fala baixo enquanto faz carinho no Kuma.",
+"Belle parece tímida mas confortável perto de você."
+]),
+choices:[
+{label:"Falar do Kuma",aff:3},
+{label:"Ser calmo",conf:3},
+{label:"Insistir com leveza",aff:2,conf:2}
+]
+};
+}
+
+// Caio Ana (difícil)
+if(state.route==="ana"){
+return {
+text:rand([
+"Ana responde seca e parece impaciente.",
+"Ela te analisa como se estivesse julgando tudo.",
+"Ana não parece fácil de agradar."
+]),
+choices:[
+{label:"Ser respeitoso",conf:3},
+{label:"Ser inteligente",aff:2},
+{label:"Forçar conversa",aff:-2,conf:-2}
+]
+};
+}
+
+}
+
+// ===== GAME =====
+
+function nextScene(){
+
+updateStatus();
+
+if(state.chapter>6){
+endGame();
+return;
+}
+
+let event = generateEvent();
+
+document.getElementById("text").innerText = event.text;
+
+let choicesDiv = document.getElementById("choices");
+choicesDiv.innerHTML="";
+
+event.choices.forEach(c=>{
+let btn=document.createElement("button");
+btn.className="choice";
+btn.innerText=c.label;
+
+btn.onclick=()=>{
+state.aff += c.aff||0;
+state.conf += c.conf||0;
+state.mood += c.mood||0;
+
+state.chapter++;
+nextScene();
+};
+
+choicesDiv.appendChild(btn);
+});
+}
+
+// ===== FINAL =====
+
+function endGame(){
+
+go("end");
+
+let result;
+
+if(state.aff>=10 && state.conf>=8){
+result="💖 Você conseguiu conquistar!";
+}
+else if(state.aff>=5){
+result="🙂 Quase... ainda tem chance.";
+}
+else{
+result="😐 Não deu dessa vez.";
+}
+
+document.getElementById("finalText").innerText=result;
+}
+
+function restart(){
+go("menu");
+}
+
+</script>
+
+</body>
+</html>
